@@ -2,4 +2,4 @@
 .venv/
 __pycache__/
 *.pyc
-CONTEXTO_PORTFOLIO_BACKEND.md
+docs/
