@@ -1,6 +1,6 @@
 # URL Shortener API
 
-API de encurtamento de URLs com Django e PostgreSQL. A criação de links está implementada; o redirecionamento e os demais endpoints ainda estão em desenvolvimento.
+API de encurtamento de URLs com Django e PostgreSQL. Implementa criação de links, redirecionamento e contador de acessos. Os endpoints de listagem, consulta e exclusão ainda estão em desenvolvimento.
 
 ## Tecnologias
 
@@ -67,7 +67,33 @@ A resposta de sucesso tem status `201 Created` e os campos `id`, `original_url`,
 
 O servidor controla o código, o contador e a data de criação. Cada criação produz um novo link, mesmo quando a URL original já foi cadastrada. O banco garante a unicidade do código; em caso de colisão, a API tenta gerar outro, com limite de cinco tentativas. Se todas colidirem, retorna `500`.
 
-O campo `short_url` usa o endereço da requisição. O redirecionamento por essa URL ainda não está implementado.
+O campo `short_url` usa o endereço da requisição e pode ser acessado para redirecionar à URL original.
+
+## Redirecionar um link
+
+`GET /<code>/` recebe o código criado pela API, incrementa o contador e responde com `302 Found`. O cabeçalho `Location` contém a URL original; navegadores normalmente seguem esse destino automaticamente. O endpoint é público, não exige autenticação e não recebe corpo.
+
+Cada GET válido soma um acesso, inclusive acessos repetidos. O contador registra requisições, não pessoas únicas. O incremento usa uma expressão `F()` no banco para evitar perda de contagem em acessos simultâneos. A resposta inclui instruções contra armazenamento em cache.
+
+Um código inexistente retorna `404`. Métodos diferentes de GET, incluindo POST e HEAD, retornam `405`, sem incrementar o contador.
+
+### Verificação manual com Thunder Client
+
+Com o servidor local iniciado:
+
+1. Envie o POST de criação e copie a `short_url` retornada.
+2. Desative o seguimento automático de redirecionamentos (Follow Redirects) nas configurações do Thunder Client para observar a resposta da API.
+3. Envie um GET para a `short_url`, sem corpo ou autenticação.
+
+Resultados esperados:
+
+| Requisição | Resultado |
+| --- | --- |
+| GET na URL curta existente | 302 e cabeçalho Location com a URL original |
+| GET com código inexistente | 404 |
+| POST na URL curta | 405 |
+
+Os testes automatizados também verificam a contagem salva no banco. Para experimentar o comportamento no navegador, abra a URL curta; ele deve encaminhar para a página original.
 
 ## Testes
 
@@ -81,4 +107,4 @@ set +a
 .venv/bin/python -m pytest -q
 ```
 
-Os testes de integração verificam criação, validação, campos controlados pelo servidor, colisões de código e métodos HTTP permitidos. O pytest-django cria um banco de testes separado; o usuário PostgreSQL precisa ter permissão para criar bancos, como ocorre na configuração local do Compose.
+Os testes de integração verificam criação, validação, campos controlados pelo servidor, colisões de código, redirecionamento, contagem de acessos e métodos HTTP permitidos. O teste de métodos do redirecionamento mantém a verificação CSRF ativa para reproduzir requisições reais sem token. O pytest-django cria um banco de testes separado; o usuário PostgreSQL precisa ter permissão para criar bancos, como ocorre na configuração local do Compose.
