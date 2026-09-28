@@ -83,8 +83,8 @@ def test_unknown_code_returns_404_without_changing_data(client):
     assert Link.objects.count() == 1
 
 
-@pytest.mark.parametrize("method", ["post", "put", "patch", "delete"])
-def test_detail_rejects_writes_without_modifying_link(client, method):
+@pytest.mark.parametrize("method", ["post", "put", "patch"])
+def test_detail_rejects_unsupported_writes_without_modifying_link(client, method):
     link = Link.objects.create(
         original_url="https://example.com/original", code="Codigo01", access_count=4
     )

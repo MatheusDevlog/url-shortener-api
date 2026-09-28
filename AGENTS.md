@@ -13,6 +13,7 @@
 - Antes de implementar uma parte importante, explique objetivo, arquivos envolvidos e caminho da informação pelo sistema.
 - Trabalhe em uma funcionalidade por vez, mantendo código simples, legível e escopo pequeno.
 - Após editar arquivos, explique por arquivo o que mudou, como foi feito, por que existe e como se conecta ao restante do projeto.
+- Use linguagem natural e exemplos concretos de uso da API nas explicações de funcionalidades. Relacione a situação real ao caminho da requisição, ao código de cada arquivo e aos efeitos nos dados; explique os termos necessários com detalhe proporcional à mudança.
 - O usuário executa comandos de desenvolvimento, instalação, migração, testes, Git e GitHub, salvo pedido explícito para executá-los. A IA pode ler e editar arquivos.
 - Ao orientar comandos, informe onde executar, para que servem e o resultado esperado. Peça a saída apenas em caso de erro, diferença ou dúvida.
 - Indique claramente a próxima ação. Se houver dúvida sobre o código, esclareça antes de avançar.

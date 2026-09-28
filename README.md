@@ -1,6 +1,6 @@
 # URL Shortener API
 
-API de encurtamento de URLs com Django e PostgreSQL. Implementa criação, listagem e consulta de links, redirecionamento e contador de acessos.
+API de encurtamento de URLs com Django e PostgreSQL. Implementa criação, listagem, consulta e exclusão de links, redirecionamento e contador de acessos.
 
 ## Tecnologias
 
@@ -75,12 +75,12 @@ Os endpoints são públicos, não exigem autenticação e não recebem corpo:
 
 | Método e caminho | Resultado |
 | --- | --- |
-| GET /api/links/ | 200 com uma lista de links, dos mais recentes aos mais antigos |
-| GET /api/links/<code>/ | 200 com os dados do link identificado pelo código |
+| `GET /api/links/` | 200 com uma lista de links, dos mais recentes aos mais antigos |
+| `GET /api/links/<code>/` | 200 com os dados do link identificado pelo código |
 
 A listagem retorna todos os registros, sem paginação. Se não houver links, retorna uma lista vazia (`[]`). Cada registro contém `id`, `original_url`, `code`, `short_url`, `access_count` e `created_at`. A consulta de um código inexistente retorna `404`.
 
-Listar ou consultar os dados não incrementa o contador. Somente acessar a URL de redirecionamento registra um acesso. A consulta individual permite apenas leitura; POST, PUT, PATCH e DELETE retornam `405`.
+Listar ou consultar os dados não incrementa o contador. Somente acessar a URL de redirecionamento registra um acesso. O endereço da consulta individual também aceita exclusão por DELETE; POST, PUT e PATCH retornam `405`.
 
 Para verificar no Thunder Client:
 
@@ -88,6 +88,26 @@ Para verificar no Thunder Client:
 2. Copie um código da resposta e envie GET para `http://127.0.0.1:8000/api/links/<code>/`, substituindo `<code>` pelo valor copiado.
 3. Anote o contador, acesse a `short_url` uma vez e consulte os dados novamente. O contador deve aumentar em um; repetir apenas a consulta deve manter esse valor.
 4. Consulte um código inexistente e confirme o status 404.
+
+## Excluir um link
+
+`DELETE /api/links/<code>/` remove definitivamente o registro identificado pelo código, incluindo seu contador e data de criação. A resposta de sucesso é `204 No Content`, sem corpo. A página original permanece disponível no seu próprio endereço.
+
+Após excluir, o link deixa de aparecer na listagem e a consulta e o redirecionamento desse código retornam `404`. Os demais links permanecem intactos. Excluir um código inexistente ou repetir a exclusão retorna `404`. DELETE na coleção `/api/links/`, sem código, retorna `405`.
+
+O endpoint é público, não exige autenticação e não recebe corpo. Qualquer cliente que conheça o código pode excluir o link.
+
+Para verificar no Thunder Client, crie um link de teste e use o código retornado:
+
+| Método e URL | Resultado esperado |
+| --- | --- |
+| `GET http://127.0.0.1:8000/api/links/<code>/` | 200 antes da exclusão |
+| `DELETE http://127.0.0.1:8000/api/links/<code>/` | 204, com corpo vazio |
+| `GET http://127.0.0.1:8000/api/links/<code>/` | 404 após a exclusão |
+| `GET http://127.0.0.1:8000/<code>/` | 404 após a exclusão |
+| `GET http://127.0.0.1:8000/api/links/` | 200, sem o link removido |
+
+Substitua `<code>` pelo valor criado e mantenha a barra final das URLs.
 
 ## Redirecionar um link
 
@@ -127,4 +147,4 @@ set +a
 .venv/bin/python -m pytest -q
 ```
 
-Os testes de integração verificam criação, validação, campos controlados pelo servidor, colisões de código, listagem, consulta por código, redirecionamento, contagem de acessos e métodos HTTP permitidos. O teste de métodos do redirecionamento mantém a verificação CSRF ativa para reproduzir requisições reais sem token. O pytest-django cria um banco de testes separado; o usuário PostgreSQL precisa ter permissão para criar bancos, como ocorre na configuração local do Compose.
+Os testes de integração verificam criação, validação, campos controlados pelo servidor, colisões de código, listagem, consulta por código, exclusão e seus efeitos nos endpoints, redirecionamento, contagem de acessos e métodos HTTP permitidos. O teste de métodos do redirecionamento mantém a verificação CSRF ativa para reproduzir requisições reais sem token. O pytest-django cria um banco de testes separado; o usuário PostgreSQL precisa ter permissão para criar bancos, como ocorre na configuração local do Compose.
