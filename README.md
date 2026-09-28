@@ -6,6 +6,18 @@ API de encurtamento de URLs com Django e PostgreSQL. Implementa criação, lista
 
 Python, Django, Django REST Framework, PostgreSQL e Docker Compose.
 
+## Endpoints
+
+| Método | Caminho | Função | Sucesso |
+| --- | --- | --- | --- |
+| POST | `/api/links/` | Criar um link | 201 |
+| GET | `/api/links/` | Listar os links | 200 |
+| GET | `/api/links/<code>/` | Consultar um link | 200 |
+| DELETE | `/api/links/<code>/` | Excluir um link | 204 |
+| GET | `/<code>/` | Redirecionar e registrar um acesso | 302 |
+
+Use a barra final dos caminhos. Os detalhes de entrada, resposta e verificação estão nas seções abaixo.
+
 ## Estrutura
 
 - `config/`: configurações e rotas gerais do Django.
@@ -15,7 +27,7 @@ Python, Django, Django REST Framework, PostgreSQL e Docker Compose.
 
 ## Preparar o ambiente local
 
-Requer Python 3.14 e Docker com Compose. Na primeira execução, crie `.env` a partir de `.env.example` e substitua `DJANGO_SECRET_KEY` e `POSTGRES_PASSWORD` por valores aleatórios. Mantenha os demais valores do exemplo para usar o PostgreSQL na porta 5432.
+Requer Python 3.14 e Docker com Compose. O Compose inicia somente o PostgreSQL; a API e os testes são executados no Python local pela `.venv`. Na primeira execução, crie `.env` a partir de `.env.example` e substitua `DJANGO_SECRET_KEY` e `POSTGRES_PASSWORD` por valores aleatórios. Mantenha os demais valores do exemplo para usar o PostgreSQL na porta 5432.
 
 ```bash
 python3 -m venv .venv
@@ -28,17 +40,17 @@ Edite `.env` antes de iniciar o banco. O arquivo é ignorado pelo Git. Se já ex
 Depois de configurar os valores:
 
 ```bash
-docker compose config --quiet
-docker compose up -d db
-docker compose exec db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 set -a
 source .env
 set +a
+docker compose config --quiet
+docker compose up -d db
+docker compose exec db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 .venv/bin/python manage.py migrate
 .venv/bin/python manage.py showmigrations links
 ```
 
-O comando `pg_isready` deve indicar que o banco aceita conexões; `showmigrations links` deve mostrar `[X] 0001_initial`.
+O comando `pg_isready` deve indicar que o banco aceita conexões antes de aplicar as migrations. Se o banco ainda estiver iniciando, repita esse comando antes de continuar. `showmigrations links` deve mostrar `[X] 0001_initial`.
 
 ## Executar a API
 
@@ -148,3 +160,7 @@ set +a
 ```
 
 Os testes de integração verificam criação, validação, campos controlados pelo servidor, colisões de código, listagem, consulta por código, exclusão e seus efeitos nos endpoints, redirecionamento, contagem de acessos e métodos HTTP permitidos. O teste de métodos do redirecionamento mantém a verificação CSRF ativa para reproduzir requisições reais sem token. O pytest-django cria um banco de testes separado; o usuário PostgreSQL precisa ter permissão para criar bancos, como ocorre na configuração local do Compose.
+
+## Licença
+
+Distribuído sob a licença MIT. Consulte [LICENSE](LICENSE).
