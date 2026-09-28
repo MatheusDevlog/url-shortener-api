@@ -1,6 +1,6 @@
 # URL Shortener API
 
-API de encurtamento de URLs com Django e PostgreSQL. Implementa criação de links, redirecionamento e contador de acessos. Os endpoints de listagem, consulta e exclusão ainda estão em desenvolvimento.
+API de encurtamento de URLs com Django e PostgreSQL. Implementa criação, listagem e consulta de links, redirecionamento e contador de acessos.
 
 ## Tecnologias
 
@@ -69,6 +69,26 @@ O servidor controla o código, o contador e a data de criação. Cada criação 
 
 O campo `short_url` usa o endereço da requisição e pode ser acessado para redirecionar à URL original.
 
+## Listar e consultar links
+
+Os endpoints são públicos, não exigem autenticação e não recebem corpo:
+
+| Método e caminho | Resultado |
+| --- | --- |
+| GET /api/links/ | 200 com uma lista de links, dos mais recentes aos mais antigos |
+| GET /api/links/<code>/ | 200 com os dados do link identificado pelo código |
+
+A listagem retorna todos os registros, sem paginação. Se não houver links, retorna uma lista vazia (`[]`). Cada registro contém `id`, `original_url`, `code`, `short_url`, `access_count` e `created_at`. A consulta de um código inexistente retorna `404`.
+
+Listar ou consultar os dados não incrementa o contador. Somente acessar a URL de redirecionamento registra um acesso. A consulta individual permite apenas leitura; POST, PUT, PATCH e DELETE retornam `405`.
+
+Para verificar no Thunder Client:
+
+1. Envie GET para `http://127.0.0.1:8000/api/links/`.
+2. Copie um código da resposta e envie GET para `http://127.0.0.1:8000/api/links/<code>/`, substituindo `<code>` pelo valor copiado.
+3. Anote o contador, acesse a `short_url` uma vez e consulte os dados novamente. O contador deve aumentar em um; repetir apenas a consulta deve manter esse valor.
+4. Consulte um código inexistente e confirme o status 404.
+
 ## Redirecionar um link
 
 `GET /<code>/` recebe o código criado pela API, incrementa o contador e responde com `302 Found`. O cabeçalho `Location` contém a URL original; navegadores normalmente seguem esse destino automaticamente. O endpoint é público, não exige autenticação e não recebe corpo.
@@ -107,4 +127,4 @@ set +a
 .venv/bin/python -m pytest -q
 ```
 
-Os testes de integração verificam criação, validação, campos controlados pelo servidor, colisões de código, redirecionamento, contagem de acessos e métodos HTTP permitidos. O teste de métodos do redirecionamento mantém a verificação CSRF ativa para reproduzir requisições reais sem token. O pytest-django cria um banco de testes separado; o usuário PostgreSQL precisa ter permissão para criar bancos, como ocorre na configuração local do Compose.
+Os testes de integração verificam criação, validação, campos controlados pelo servidor, colisões de código, listagem, consulta por código, redirecionamento, contagem de acessos e métodos HTTP permitidos. O teste de métodos do redirecionamento mantém a verificação CSRF ativa para reproduzir requisições reais sem token. O pytest-django cria um banco de testes separado; o usuário PostgreSQL precisa ter permissão para criar bancos, como ocorre na configuração local do Compose.
