@@ -75,7 +75,7 @@ def test_short_url_returned_by_creation_can_be_used_to_redirect():
     client = APIClient()
     original_url = "https://example.com/page"
     created = client.post(
-        reverse("links:create"), {"original_url": original_url}, format="json"
+        reverse("links:list-create"), {"original_url": original_url}, format="json"
     )
     assert created.status_code == 201
 

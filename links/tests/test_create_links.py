@@ -19,7 +19,7 @@ def client():
 )
 def test_create_link(client, original_url):
     response = client.post(
-        reverse("links:create"), {"original_url": original_url}, format="json"
+        reverse("links:list-create"), {"original_url": original_url}, format="json"
     )
 
     assert response.status_code == 201
@@ -51,7 +51,7 @@ def test_create_link(client, original_url):
     ],
 )
 def test_reject_invalid_url(client, payload):
-    response = client.post(reverse("links:create"), payload, format="json")
+    response = client.post(reverse("links:list-create"), payload, format="json")
 
     assert response.status_code == 400
     assert "original_url" in response.data
@@ -61,7 +61,7 @@ def test_reject_invalid_url(client, payload):
 def test_server_controls_code_and_access_count(client):
     with patch("links.serializers.get_random_string", return_value="Novo1234"):
         response = client.post(
-            reverse("links:create"),
+            reverse("links:list-create"),
             {"original_url": "https://example.com", "code": "Escolhido", "access_count": 99},
             format="json",
         )
@@ -77,10 +77,10 @@ def test_same_url_can_have_different_codes(client):
         "links.serializers.get_random_string", side_effect=["Codigo01", "Codigo02"]
     ):
         first = client.post(
-            reverse("links:create"), {"original_url": "https://example.com"}, format="json"
+            reverse("links:list-create"), {"original_url": "https://example.com"}, format="json"
         )
         second = client.post(
-            reverse("links:create"), {"original_url": "https://example.com"}, format="json"
+            reverse("links:list-create"), {"original_url": "https://example.com"}, format="json"
         )
 
     assert first.status_code == second.status_code == 201
@@ -97,7 +97,7 @@ def test_retry_when_code_already_exists(client):
         "links.serializers.get_random_string", side_effect=["Usado123", "Novo1234"]
     ):
         response = client.post(
-            reverse("links:create"),
+            reverse("links:list-create"),
             {"original_url": "https://example.com/new"},
             format="json",
         )
@@ -116,7 +116,7 @@ def test_return_error_after_repeated_collisions(client):
         "links.serializers.get_random_string", return_value="Usado123"
     ) as generate_code:
         response = client.post(
-            reverse("links:create"),
+            reverse("links:list-create"),
             {"original_url": "https://example.com/new"},
             format="json",
         )
@@ -126,9 +126,3 @@ def test_return_error_after_repeated_collisions(client):
     assert generate_code.call_count == 5
     assert Link.objects.count() == 1
 
-
-def test_creation_endpoint_does_not_allow_listing(client):
-    response = client.get(reverse("links:create"))
-
-    assert response.status_code == 405
-    assert not Link.objects.exists()
